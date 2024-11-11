@@ -1,0 +1,212 @@
+Neste desafio, você será avaliado quanto à sua experiência na automação de testes móveis utilizando o Appium, uma das ferramentas mais populares para automação de testes de aplicativos móveis. As tarefas práticas são divididas em duas partes: a automação de um login e navegação simples em um aplicativo de exemplo, e a automação de um cenário de preenchimento de formulário.
+
+Ferramentas e Tecnologias
+Appium: Para automação de testes em aplicativos móveis (iOS e Android).
+Java: Para escrever os testes, junto com o JUnit ou TestNG para execução de testes.
+Maven: Para gerenciamento de dependências (caso utilize Java).
+Appium Desktop (opcional): Para inspeção de elementos de UI nos dispositivos móveis e visualização de logs.
+Emuladores/Simuladores: Para execução dos testes em dispositivos móveis (Android ou iOS).
+Tarefa 1: Teste de Login e Navegação com Appium
+Passo 1: Configuração do Ambiente
+Antes de escrever os testes, é necessário configurar o ambiente de desenvolvimento:
+
+Instalar o Appium:
+
+Appium pode ser instalado via npm (Node.js). Certifique-se de ter o Node.js instalado em sua máquina.
+
+Execute o comando abaixo para instalar o Appium:
+
+bash
+Copiar código
+npm install -g appium
+Instalar o Appium Desktop:
+
+O Appium Desktop é uma ferramenta gráfica para inspeção de elementos, o que facilita encontrar os locators dos elementos de UI do aplicativo.
+Faça o download em: Appium Desktop.
+Emuladores/Simuladores:
+
+Para Android, instale o Android Studio e crie emuladores de dispositivos móveis.
+Para iOS, utilize o Xcode (se estiver em um Mac) para criar simuladores.
+Dependências de Testes (para Java): Se você estiver usando Java e Maven, adicione as dependências no seu pom.xml:
+
+xml
+Copiar código
+<dependencies>
+    <dependency>
+        <groupId>io.appium</groupId>
+        <artifactId>java-client</artifactId>
+        <version>8.0.0</version>
+    </dependency>
+    <dependency>
+        <groupId>org.testng</groupId>
+        <artifactId>testng</artifactId>
+        <version>7.4.0</version>
+        <scope>test</scope>
+    </dependency>
+</dependencies>
+Passo 2: Escrever o Código de Teste - Login e Navegação
+Agora, vamos criar um teste simples de login e navegação utilizando o Appium.
+
+Código de exemplo em Java (JUnit):
+
+java
+Copiar código
+import io.appium.java_client.MobileElement;
+import io.appium.java_client.android.AndroidDriver;
+import org.openqa.selenium.By;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import java.net.URL;
+import static org.junit.Assert.assertTrue;
+
+public class MobileTest {
+    
+    private AndroidDriver<MobileElement> driver;
+
+    @Before
+    public void setUp() throws Exception {
+        DesiredCapabilities caps = new DesiredCapabilities();
+        caps.setCapability("platformName", "Android");
+        caps.setCapability("deviceName", "emulator-5554");  // ID do emulador
+        caps.setCapability("appPackage", "com.example.myapp"); // Substitua pelo package do app
+        caps.setCapability("appActivity", "com.example.myapp.MainActivity"); // Substitua pela atividade principal do app
+        caps.setCapability("noReset", true);  // Não resetar o app após cada execução
+
+        driver = new AndroidDriver<>(new URL("http://127.0.0.1:4723/wd/hub"), caps);
+    }
+
+    @Test
+    public void testLoginAndNavigate() throws InterruptedException {
+        // Localizar o campo de login e senha e realizar o login
+        MobileElement usernameField = driver.findElement(By.id("com.example.myapp:id/username"));
+        MobileElement passwordField = driver.findElement(By.id("com.example.myapp:id/password"));
+        MobileElement loginButton = driver.findElement(By.id("com.example.myapp:id/loginButton"));
+        
+        usernameField.sendKeys("teste@teste.com");
+        passwordField.sendKeys("senha123");
+        loginButton.click();
+        
+        // Esperar pela navegação para a tela principal
+        Thread.sleep(3000);  // Melhor utilizar WebDriverWait em vez de Thread.sleep
+        
+        // Validar se a navegação foi bem-sucedida (exemplo de um botão visível após login)
+        MobileElement mainScreenButton = driver.findElement(By.id("com.example.myapp:id/mainScreenButton"));
+        assertTrue(mainScreenButton.isDisplayed());
+    }
+
+    @After
+    public void tearDown() {
+        if (driver != null) {
+            driver.quit();
+        }
+    }
+}
+Explicação do Código:
+DesiredCapabilities: Define as capacidades do dispositivo/emulador para o Appium (como plataforma, dispositivo, e aplicativo a ser testado).
+login: Encontra os elementos do campo de usuário, senha e o botão de login, preenche os campos e clica no botão de login.
+Navegação: Após o login, valida se a navegação foi bem-sucedida, verificando se um botão da tela principal está visível.
+driver.quit(): Encerra a sessão do Appium após o teste.
+Passo 3: Rodar o Teste
+Para rodar o teste, basta executar o código com o comando:
+bash
+Copiar código
+mvn test
+Tarefa 2: Preenchimento de Formulário e Envio de Dados
+Agora, vamos automatizar o preenchimento de um formulário em um aplicativo móvel e submeter os dados.
+
+Passo 1: Escrever o Código de Teste - Preenchimento de Formulário
+Neste exemplo, vamos preencher um formulário de cadastro em um aplicativo, preenchendo os campos de nome, e-mail, e senha, e clicando no botão de envio.
+
+Código de exemplo em Java (JUnit):
+
+java
+Copiar código
+import io.appium.java_client.MobileElement;
+import io.appium.java_client.android.AndroidDriver;
+import org.openqa.selenium.By;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import java.net.URL;
+import static org.junit.Assert.assertTrue;
+
+public class MobileFormTest {
+    
+    private AndroidDriver<MobileElement> driver;
+
+    @Before
+    public void setUp() throws Exception {
+        DesiredCapabilities caps = new DesiredCapabilities();
+        caps.setCapability("platformName", "Android");
+        caps.setCapability("deviceName", "emulator-5554");  // ID do emulador
+        caps.setCapability("appPackage", "com.example.myapp"); // Substitua pelo package do app
+        caps.setCapability("appActivity", "com.example.myapp.FormActivity"); // Substitua pela atividade do formulário
+        caps.setCapability("noReset", true);
+
+        driver = new AndroidDriver<>(new URL("http://127.0.0.1:4723/wd/hub"), caps);
+    }
+
+    @Test
+    public void testFormFillAndSubmit() throws InterruptedException {
+        // Preenchendo o formulário
+        MobileElement nameField = driver.findElement(By.id("com.example.myapp:id/name"));
+        MobileElement emailField = driver.findElement(By.id("com.example.myapp:id/email"));
+        MobileElement passwordField = driver.findElement(By.id("com.example.myapp:id/password"));
+        MobileElement submitButton = driver.findElement(By.id("com.example.myapp:id/submitButton"));
+        
+        nameField.sendKeys("João Silva");
+        emailField.sendKeys("joao@exemplo.com");
+        passwordField.sendKeys("senhaSecreta123");
+        submitButton.click();
+        
+        // Esperar pela confirmação de envio
+        Thread.sleep(3000); // Melhor usar WebDriverWait aqui
+        
+        // Validar que a confirmação foi bem-sucedida (exemplo de um texto de sucesso)
+        MobileElement successMessage = driver.findElement(By.id("com.example.myapp:id/successMessage"));
+        assertTrue(successMessage.isDisplayed());
+    }
+
+    @After
+    public void tearDown() {
+        if (driver != null) {
+            driver.quit();
+        }
+    }
+}
+Explicação do Código:
+Campos do formulário: Localiza os campos de nome, e-mail e senha, preenche os campos e envia o formulário clicando no botão de envio.
+Validação: Após o envio, o código valida se uma mensagem de sucesso aparece, indicando que o envio foi bem-sucedido.
+Passo 2: Rodar o Teste
+Para rodar o teste, utilize o comando:
+bash
+Copiar código
+mvn test
+Relatório Detalhado
+Após a execução dos testes, um relatório detalhado será gerado com os resultados. Para isso, pode-se utilizar TestNG ou Allure para gerar relatórios bonitos e fáceis de ler.
+
+Exemplo de Configuração para Relatórios TestNG:
+Adicionar dependência do TestNG no pom.xml:
+
+xml
+Copiar código
+<dependency>
+    <groupId>org.testng</groupId>
+    <artifactId>testng</artifactId>
+    <version>7.4.0</version>
+    <scope>test</scope>
+</dependency>
+Gerar Relatórios em HTML: Após a execução, o TestNG pode gerar relatórios em HTML, que ficam localizados no diretório target/surefire-reports.
+
+O comando para rodar os testes com o TestNG seria:
+
+bash
+Copiar código
+mvn test -DsuiteXmlFile=testng.xml
+Conclusão
+Tarefa 1 (Login e Navegação): Você aprendeu a criar testes de login e navegação, incluindo a configuração do Appium, uso de locators nativos e validação de navegação correta.
+Tarefa 2 (Preenchimento de Formulário): Foi automatizado o processo de preenchimento de um formulário e envio de dados, com validação da resposta do sistema.
+Ao concluir essas tarefas, você tem uma boa base para criar testes móveis automatizados utilizando Appium, além de gerar relatórios detalhados dos resultados da execução.
