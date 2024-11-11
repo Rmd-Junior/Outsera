@@ -1,0 +1,208 @@
+Para realizar as tarefas propostas, vamos usar o Rest Assured para a tarefa de validação de endpoints de uma API, já que o Rest Assured é uma biblioteca muito popular para testes de APIs RESTful em Java. Em seguida, vamos automatizar testes para múltiplos endpoints, validando diferentes métodos HTTP (GET, POST, PUT, DELETE), e gerar um relatório detalhado.
+
+Tarefa 1: Criar Testes de Validação de Endpoints de uma API
+Escolha da API de Exemplo
+Usaremos uma API pública de exemplo chamada JSONPlaceholder, que oferece endpoints para simulação de dados (posts, usuários, comentários, etc). Esta API é ideal para testar endpoints RESTful.
+
+Dependências do Rest Assured
+Certifique-se de adicionar o Rest Assured no seu projeto Java. Se estiver usando Maven, adicione a seguinte dependência no pom.xml:
+
+xml
+Copiar código
+<dependency>
+    <groupId>io.rest-assured</groupId>
+    <artifactId>rest-assured</artifactId>
+    <version>5.3.0</version> <!-- Verifique a última versão -->
+    <scope>test</scope>
+</dependency>
+Exemplo de Teste com Rest Assured
+Aqui está um exemplo básico de como testar um endpoint GET de uma API usando Rest Assured. O objetivo é validar o status code, os headers e o corpo da resposta.
+
+java
+Copiar código
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+public class APITest {
+
+    // Endpoint da API de exemplo (JSONPlaceholder)
+    private static final String BASE_URL = "https://jsonplaceholder.typicode.com";
+
+    @Test
+    public void testGetPosts() {
+        // Realizando uma requisição GET para obter posts
+        Response response = RestAssured
+                .given()
+                .baseUri(BASE_URL)
+                .basePath("/posts")
+                .when()
+                .get();
+
+        // Validação de status code (200 OK)
+        Assert.assertEquals(response.getStatusCode(), 200);
+
+        // Validação de headers
+        Assert.assertTrue(response.getHeader("Content-Type").contains("application/json"));
+
+        // Validação do corpo da resposta (JSON)
+        String firstPostTitle = response.jsonPath().getString("[0].title");
+        Assert.assertNotNull(firstPostTitle);
+        Assert.assertTrue(firstPostTitle.length() > 0);
+    }
+}
+Explicação do Teste:
+Status Code: Verifica se o status code da resposta é 200 OK.
+Headers: Verifica se o cabeçalho Content-Type contém application/json.
+Corpo da Resposta: Extraímos o título do primeiro post e garantimos que ele não seja nulo ou vazio.
+Testes Negativos
+Agora, vamos adicionar um teste negativo para um endpoint que não existe. Neste caso, esperamos que a resposta seja 404 Not Found.
+
+java
+Copiar código
+@Test
+public void testInvalidEndpoint() {
+    // Realizando uma requisição GET para um endpoint inválido
+    Response response = RestAssured
+            .given()
+            .baseUri(BASE_URL)
+            .basePath("/invalid-endpoint")
+            .when()
+            .get();
+
+    // Validação de status code (404 Not Found)
+    Assert.assertEquals(response.getStatusCode(), 404);
+}
+Tarefa 2: Automatizar Testes para Múltiplos Endpoints
+Agora, vamos automatizar testes para múltiplos endpoints da API, validando diferentes métodos HTTP: GET, POST, PUT, DELETE.
+
+1. Testando o Endpoint GET (Posts)
+java
+Copiar código
+@Test
+public void testGetPosts() {
+    Response response = RestAssured
+            .given()
+            .baseUri(BASE_URL)
+            .basePath("/posts")
+            .when()
+            .get();
+
+    // Verificações
+    Assert.assertEquals(response.getStatusCode(), 200);
+    Assert.assertTrue(response.getHeader("Content-Type").contains("application/json"));
+    Assert.assertTrue(response.jsonPath().getList("$").size() > 0); // Verifica se existem posts
+}
+2. Testando o Endpoint POST (Criar um Post)
+Vamos testar a criação de um novo post utilizando o método POST.
+
+java
+Copiar código
+@Test
+public void testCreatePost() {
+    String newPost = "{\n" +
+                     "    \"title\": \"foo\",\n" +
+                     "    \"body\": \"bar\",\n" +
+                     "    \"userId\": 1\n" +
+                     "}";
+
+    Response response = RestAssured
+            .given()
+            .baseUri(BASE_URL)
+            .basePath("/posts")
+            .header("Content-Type", "application/json")
+            .body(newPost)
+            .when()
+            .post();
+
+    // Verificações
+    Assert.assertEquals(response.getStatusCode(), 201); // 201 Created
+    Assert.assertTrue(response.jsonPath().getString("title").equals("foo"));
+    Assert.assertTrue(response.jsonPath().getString("body").equals("bar"));
+}
+3. Testando o Endpoint PUT (Atualizar um Post)
+Agora, vamos testar a atualização de um post existente com o método PUT.
+
+java
+Copiar código
+@Test
+public void testUpdatePost() {
+    String updatedPost = "{\n" +
+                         "    \"id\": 1,\n" +
+                         "    \"title\": \"foo updated\",\n" +
+                         "    \"body\": \"bar updated\",\n" +
+                         "    \"userId\": 1\n" +
+                         "}";
+
+    Response response = RestAssured
+            .given()
+            .baseUri(BASE_URL)
+            .basePath("/posts/1") // Atualizando o post com ID 1
+            .header("Content-Type", "application/json")
+            .body(updatedPost)
+            .when()
+            .put();
+
+    // Verificações
+    Assert.assertEquals(response.getStatusCode(), 200); // 200 OK
+    Assert.assertTrue(response.jsonPath().getString("title").equals("foo updated"));
+}
+4. Testando o Endpoint DELETE (Excluir um Post)
+Por fim, vamos testar a exclusão de um post utilizando o método DELETE.
+
+java
+Copiar código
+@Test
+public void testDeletePost() {
+    Response response = RestAssured
+            .given()
+            .baseUri(BASE_URL)
+            .basePath("/posts/1") // Excluindo o post com ID 1
+            .when()
+            .delete();
+
+    // Verificações
+    Assert.assertEquals(response.getStatusCode(), 200); // 200 OK
+}
+Relatório Detalhado com Resultados dos Testes
+Para gerar um relatório detalhado com o TestNG (uma das frameworks mais comuns para rodar testes Java), você pode configurar o TestNG para gerar relatórios em formato HTML ou XML.
+
+Configuração no testng.xml
+Crie um arquivo testng.xml na raiz do projeto para configurar a execução dos testes e gerar o relatório:
+
+xml
+Copiar código
+<?xml version="1.0" encoding="UTF-8"?>
+<suite name="API Tests">
+    <test name="API Test Suite">
+        <classes>
+            <class name="APITest"/>
+        </classes>
+    </test>
+</suite>
+Executando o TestNG e Gerando o Relatório
+Para rodar os testes e gerar um relatório HTML, execute o comando:
+
+bash
+Copiar código
+mvn test
+Após a execução, o TestNG gerará um relatório em target/surefire-reports (se estiver usando Maven) com informações detalhadas sobre os testes, incluindo:
+
+Número de testes executados.
+Número de testes com sucesso.
+Número de falhas.
+Detalhes de cada teste, incluindo logs e resultados.
+Resumo da Tarefa
+Teste de API com Rest Assured:
+
+Criamos testes para validar GET, POST, PUT, e DELETE.
+Para cada método HTTP, verificamos o status code, headers, e corpo da resposta.
+Também realizamos testes positivos e negativos (como tentar acessar um endpoint inválido).
+Automatização de Testes:
+
+Automatizamos testes para múltiplos endpoints e métodos HTTP.
+Validamos as respostas para garantir que a API está funcionando conforme o esperado.
+Relatório:
+
+Utilizamos o TestNG para rodar os testes e gerar relatórios detalhados sobre os resultados da execução.
