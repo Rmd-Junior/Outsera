@@ -1,0 +1,161 @@
+Objetivo
+O objetivo desta tarefa é demonstrar como configurar um pipeline de CI/CD (Integração Contínua / Entrega Contínua) em uma plataforma como GitLab ou GitHub Actions, para executar testes automatizados de API, E2E (ponta a ponta), e mobile a cada novo commit realizado no repositório. Também será gerado um relatório detalhado das execuções e dos resultados dos testes.
+
+Ferramentas e Tecnologias
+CI/CD Tools: GitLab CI, GitHub Actions
+Testes Automatizados:
+API Tests: Rest Assured ou Postman Collection
+E2E Tests: Cucumber + Selenium / Cypress / Playwright
+Mobile Tests: Appium (para testes mobile), Detox ou Selenium WebDriver com Appium
+Relatório: TestNG, Allure (para gerar relatórios legíveis e detalhados)
+Controle de versão: Git (GitLab ou GitHub)
+Tarefa 1: Descrição ou Configuração de um Pipeline CI/CD
+A tarefa consiste em descrever como integrar testes automatizados em um pipeline de CI/CD, incluindo a execução de testes de API, E2E e Mobile.
+
+1. Pipeline de CI/CD no GitHub Actions
+Vamos configurar um pipeline no GitHub Actions para automatizar o processo de testes a cada novo commit. O pipeline irá cobrir os seguintes cenários:
+
+Testes de API: Testar a integridade e resposta da API.
+Testes E2E: Testar fluxos completos da aplicação.
+Testes Mobile: Testar a interface do usuário em dispositivos móveis.
+Passo 1: Criando o arquivo do pipeline no GitHub Actions
+No GitHub, criaremos um arquivo de configuração do pipeline dentro da pasta .github/workflows/. O nome do arquivo pode ser ci-cd-pipeline.yml.
+
+Arquivo: .github/workflows/ci-cd-pipeline.yml
+
+yaml
+Copiar código
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  api-tests:
+    name: Run API Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        
+      - name: Set up Java
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'  # Defina a versão do Java se necessário
+        
+      - name: Install dependencies
+        run: mvn install  # Instala as dependências do Maven
+      
+      - name: Run API Tests
+        run: mvn test -Dtest=ApiTests  # Substitua ApiTests com o nome da sua classe de testes de API
+  
+  e2e-tests:
+    name: Run E2E Tests
+    runs-on: ubuntu-latest
+    needs: api-tests
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Install dependencies
+        run: |
+          npm install  # Ou yarn install, conforme a sua configuração
+      
+      - name: Run E2E Tests with Cypress
+        run: npx cypress run --headless  # Execute testes E2E com Cypress
+      
+  mobile-tests:
+    name: Run Mobile Tests
+    runs-on: macos-latest
+    needs: e2e-tests
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      
+      - name: Install dependencies
+        run: npm install  # Ou yarn install
+      
+      - name: Run Mobile Tests with Appium
+        run: |
+          npm install -g appium
+          appium & # Inicia o servidor do Appium em background
+          npm run test:mobile  # Substitua com seu comando de teste mobile
+Explicação do Pipeline
+Três Jobs: O pipeline está dividido em três jobs:
+
+api-tests: Executa os testes de API.
+e2e-tests: Executa os testes E2E com Cypress.
+mobile-tests: Executa os testes em dispositivos móveis usando Appium.
+Execução em Paralelo: Os testes de API são executados primeiro, seguidos pelos testes E2E e, finalmente, pelos testes móveis. O uso do campo needs garante que os jobs sejam executados na ordem correta.
+
+Execução por Push ou Pull Request: O pipeline é disparado automaticamente para qualquer push ou pull request nas branches main.
+
+Passo 2: Definir as Dependências e Testes
+Testes de API: Os testes de API podem ser feitos usando Rest Assured (Java) ou Postman Collection. O arquivo de testes de API será executado com Maven.
+
+Testes E2E: Utilizamos o Cypress para os testes de ponta a ponta. Instale o Cypress e configure os testes dentro do seu projeto.
+
+Testes Mobile: Usamos Appium para testar dispositivos móveis. O código de teste pode ser feito em JavaScript (ou outra linguagem compatível), utilizando Appium para automatizar interações com a interface móvel.
+
+Passo 3: Relatórios e Resultados dos Testes
+Testes de API (com Rest Assured): Ao rodar os testes de API com Maven, podemos usar o Surefire Report para gerar relatórios em formato HTML.
+
+Exemplo de execução de teste com relatórios:
+
+bash
+Copiar código
+mvn test -Dsurefire.reportFormat=html
+Testes E2E (com Cypress): O Cypress gera relatórios automaticamente. Para integrá-los no pipeline, você pode configurar o Cypress para gerar relatórios em formato JUnit, que pode ser lido diretamente pelo GitHub Actions.
+
+Para gerar relatórios do Cypress:
+
+json
+Copiar código
+{
+  "reporter": "junit",
+  "reporterOptions": {
+    "mochaFile": "results/test-output-[hash].xml"
+  }
+}
+Testes Mobile (com Appium): O Appium pode gerar logs detalhados sobre as interações com a interface do dispositivo. Configure os relatórios para que eles sejam capturados e armazenados após a execução dos testes.
+
+Passo 4: Visualização de Resultados e Relatórios
+Após a execução do pipeline, você pode acessar o resultado dos testes diretamente na interface do GitHub Actions. Para melhorar a visibilidade, é possível configurar o pipeline para armazenar os relatórios gerados no processo (ex: Cypress, TestNG).
+
+Você pode também configurar o pipeline para gerar Allure Reports ou outros relatórios visuais mais ricos, que podem ser visualizados diretamente na interface do GitHub ou em sites externos.
+
+Relatório Detalhado dos Testes Executados
+O relatório pode ser obtido diretamente através das execuções no GitHub Actions. A visualização do histórico de execuções estará disponível na aba de Actions do repositório.
+
+Além disso, relatórios mais detalhados podem ser configurados para gerar links de arquivos HTML, JUnit ou Allure, como mostrado abaixo:
+
+yaml
+Copiar código
+- name: Upload Cypress Test Results
+  uses: actions/upload-artifact@v2
+  with:
+    name: cypress-test-results
+    path: results/*.xml  # Ou o diretório onde os relatórios estão localizados
+Exemplo de Relatório no GitHub Actions
+Após a execução do pipeline, o GitHub Actions fornece uma interface de relatórios com informações sobre a execução dos testes, como:
+
+Testes de API: Resultados dos testes de integração com a API.
+Testes E2E: Relatório visual de execução de testes de ponta a ponta.
+Testes Móveis: Resultados de interações móveis em dispositivos emulado.
+Cada etapa do pipeline (como api-tests, e2e-tests, mobile-tests) terá suas respectivas saídas (logs e relatórios) acessíveis a partir da interface de GitHub Actions.
+
+Resumo
+Configuração do Pipeline: O pipeline foi configurado no GitHub Actions para rodar testes automatizados de API, E2E e Mobile a cada novo commit.
+Execução de Testes: Foram usados Rest Assured para API, Cypress para E2E, e Appium para testes móveis. Cada uma dessas ferramentas foi configurada para rodar automaticamente no pipeline.
+Geração de Relatórios: Relatórios de execução de testes foram configurados para serem gerados em formatos HTML, JUnit ou Allure.
+Integração com CI/CD: O pipeline é executado automaticamente em push ou pull request e os resultados são apresentados diretamente na interface do GitHub Actions.
