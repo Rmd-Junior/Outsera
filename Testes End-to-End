@@ -1,0 +1,256 @@
+Para atender a essas tarefas práticas utilizando **Cucumber**, **Selenium**, e boas práticas de automação de testes de ponta a ponta (E2E), vamos dividir o processo em dois passos principais. No primeiro, criaremos um teste simples de login e navegação usando **Cucumber** em conjunto com **Selenium** (ou uma ferramenta similar, como **Cypress** ou **Playwright**). No segundo, automatizaremos um fluxo de **checkout** simples em um e-commerce fictício.
+
+**Ferramentas e Tecnologias Utilizadas**
+- **Cucumber**: Framework BDD (Behavior Driven Development) para escrever testes legíveis por humanos.
+- **Selenium**: Ferramenta para automação de navegadores (pode ser substituída por Cypress ou Playwright, dependendo da escolha).
+- **Maven**: Para gerenciar dependências e executar testes no caso de usar **Selenium** com **Cucumber**.
+
+**Dependências do Maven para Cucumber e Selenium:**
+
+Se estiver utilizando o **Maven**, adicione as seguintes dependências no seu `pom.xml`:
+
+```xml
+<dependencies>
+    <!-- Cucumber Dependencies -->
+    <dependency>
+        <groupId>io.cucumber</groupId>
+        <artifactId>cucumber-java</artifactId>
+        <version>7.11.0</version> <!-- Verifique pela última versão -->
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>io.cucumber</groupId>
+        <artifactId>cucumber-spring</artifactId>
+        <version>7.11.0</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>io.cucumber</groupId>
+        <artifactId>cucumber-selenium</artifactId>
+        <version>7.11.0</version>
+        <scope>test</scope>
+    </dependency>
+    
+    <!-- Selenium WebDriver Dependency -->
+    <dependency>
+        <groupId>org.seleniumhq.selenium</groupId>
+        <artifactId>selenium-java</artifactId>
+        <version>4.4.0</version> <!-- Verifique pela última versão -->
+    </dependency>
+
+    <!-- Test Runner for Maven -->
+    <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-api</artifactId>
+        <version>5.7.0</version> <!-- Versão do JUnit para execução -->
+        <scope>test</scope>
+    </dependency>
+</dependencies>
+```
+
+**Tarefa 1: Criar um Teste Simples de Login e Navegação**
+
+**Objetivo**: Criar um teste de ponta a ponta simples para um sistema de login que valide a navegação até uma página específica (ex.: formulário) após o login.
+
+**Passo 1: Escrever os Arquivos de Feature do Cucumber**
+
+O **Cucumber** usa arquivos `.feature` para descrever o comportamento do sistema. Vamos criar um arquivo de feature para o login.
+
+**Arquivo: `login.feature`**
+
+```gherkin
+Feature: Login to the application
+
+  Scenario: Successful login and navigation to the user dashboard
+    Given I am on the login page
+    When I enter valid credentials
+    And I click the login button
+    Then I should be redirected to the dashboard page
+    And I should see the user dashboard
+```
+
+**Passo 2: Implementar o Step Definition**
+
+Agora, implementamos os passos descritos no arquivo `.feature`. O Cucumber usa classes de *Step Definition* que mapeiam os passos para código executável.
+
+**Arquivo: `LoginSteps.java`**
+
+```java
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.When;
+import io.cucumber.java.en.Then;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.junit.Assert;
+
+public class LoginSteps {
+    
+    WebDriver driver = new ChromeDriver();
+
+    @Given("I am on the login page")
+    public void i_am_on_the_login_page() {
+        driver.get("http://exemplo.com/login");
+    }
+
+    @When("I enter valid credentials")
+    public void i_enter_valid_credentials() {
+        WebElement usernameField = driver.findElement(By.id("username"));
+        WebElement passwordField = driver.findElement(By.id("password"));
+        
+        usernameField.sendKeys("usuario");
+        passwordField.sendKeys("senha123");
+    }
+
+    @When("I click the login button")
+    public void i_click_the_login_button() {
+        WebElement loginButton = driver.findElement(By.id("loginBtn"));
+        loginButton.click();
+    }
+
+    @Then("I should be redirected to the dashboard page")
+    public void i_should_be_redirected_to_the_dashboard_page() {
+        String currentUrl = driver.getCurrentUrl();
+        Assert.assertEquals("http://exemplo.com/dashboard", currentUrl);
+    }
+
+    @Then("I should see the user dashboard")
+    public void i_should_see_the_user_dashboard() {
+        WebElement dashboardHeader = driver.findElement(By.tagName("h1"));
+        Assert.assertEquals("Dashboard", dashboardHeader.getText());
+    }
+    
+    // Optional: close browser after the test
+    @After
+    public void closeBrowser() {
+        driver.quit();
+    }
+}
+```
+
+**Passo 3: Configurar o Test Runner**
+
+Em seguida, criamos o **Test Runner** que irá orquestrar a execução do Cucumber.
+
+**Arquivo: `TestRunner.java`**
+
+```java
+import io.cucumber.junit.Cucumber;
+import io.cucumber.junit.CucumberOptions;
+import org.junit.runner.RunWith;
+
+@RunWith(Cucumber.class)
+@CucumberOptions(
+    features = "src/test/resources/features", // Caminho para os arquivos de feature
+    glue = "stepdefinitions" // Caminho para os step definitions
+)
+public class TestRunner {
+}
+```
+
+**Passo 4: Executar os Testes**
+
+Para rodar os testes, basta executar a classe `TestRunner` como um teste JUnit no seu IDE ou via Maven com o comando:
+
+```bash
+mvn test
+```
+
+**Tarefa 2: Automatizar o Fluxo de Checkout em um E-commerce**
+
+Agora, vamos automatizar um fluxo simples de checkout para um e-commerce fictício. O cenário de checkout envolve:
+
+- Adicionar produtos ao carrinho.
+- Preencher um formulário de pagamento.
+- Finalizar a compra.
+
+**Arquivo: `checkout.feature`**
+
+```gherkin
+Feature: Checkout flow in e-commerce
+
+  Scenario: Complete a checkout process
+    Given I have added a product to the cart
+    When I go to the checkout page
+    And I fill in the payment details
+    And I click on the "Complete Purchase" button
+    Then I should see the order confirmation page
+    And I should see the order number
+```
+
+**Passo 1: Implementação dos Steps**
+
+Vamos criar o código para automatizar o processo de checkout, que inclui adicionar produtos ao carrinho, preencher dados e finalizar a compra.
+
+**Arquivo: `CheckoutSteps.java`**
+
+```java
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.When;
+import io.cucumber.java.en.Then;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.junit.Assert;
+
+public class CheckoutSteps {
+    
+    WebDriver driver = new ChromeDriver();
+
+    @Given("I have added a product to the cart")
+    public void i_have_added_a_product_to_the_cart() {
+        driver.get("http://exemplo.com");
+        WebElement product = driver.findElement(By.id("product-1"));
+        product.click();
+        
+        WebElement addToCartButton = driver.findElement(By.id("addToCart"));
+        addToCartButton.click();
+    }
+
+    @When("I go to the checkout page")
+    public void i_go_to_the_checkout_page() {
+        WebElement cartButton = driver.findElement(By.id("cart"));
+        cartButton.click();
+    }
+
+    @When("I fill in the payment details")
+    public void i_fill_in_the_payment_details() {
+        WebElement cardNumberField = driver.findElement(By.id("cardNumber"));
+        WebElement expiryDateField = driver.findElement(By.id("expiryDate"));
+        WebElement cvvField = driver.findElement(By.id("cvv"));
+        
+        cardNumberField.sendKeys("4111111111111111");
+        expiryDateField.sendKeys("12/25");
+        cvvField.sendKeys("123");
+    }
+
+    @When("I click on the \"Complete Purchase\" button")
+    public void i_click_on_the_complete_purchase_button() {
+        WebElement completePurchaseButton = driver.findElement(By.id("completePurchase"));
+        completePurchaseButton.click();
+    }
+
+    @Then("I should see the order confirmation page")
+    public void i_should_see_the_order_confirmation_page() {
+        String currentUrl = driver.getCurrentUrl();
+        Assert.assertEquals("http://exemplo.com/order-confirmation", currentUrl);
+    }
+
+    @Then("I should see the order number")
+    public void i_should_see_the_order_number() {
+        WebElement orderNumber = driver.findElement(By.id("orderNumber"));
+        Assert.assertTrue(orderNumber.getText().matches("Order #\\d+"));
+    }
+
+    @After
+    public void closeBrowser() {
+        driver.quit();
+    }
+}
+```
+
+### **Relatório Detalhado dos Testes E2E**
+
+Para gerar um relatório detalhado dos testes E2E, você pode configurar o **Cucumber** para gerar relatórios em formato HTML. Adicione a 4o mini
